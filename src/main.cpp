@@ -5,6 +5,9 @@
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void processInput(GLFWwindow* window);
+
+float displace = 0.0f;
 
 // settings
 const unsigned int SCR_WIDTH =  960;
@@ -20,7 +23,7 @@ int main() {
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Eggomination", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -50,20 +53,28 @@ int main() {
     // Sprite
     Object(sprite_vertices,sprite_indices,&vao[sprite],&vbo[sprite],&ebo[sprite]);
     Shader spriteShader(SHADER_DIR "spriteVertex.shader", SHADER_DIR "spriteFragment.shader");
-    Texture spriteTex(GL_TEXTURE_2D,TEX_DIR "container.jpg",false);
+    Texture spriteTex(GL_TEXTURE_2D,TEX_DIR "basket.png",true);
     spriteTex.parameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     spriteTex.parameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glEnable(GL_BLEND); //Enable blending.
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //Set blending function.
+
     spriteShader.use();
-    glm::mat4 model = glm::mat4(1.0);
-    model = glm::translate(model,glm::vec3(0.0f,-0.9f,0.0f));
-    spriteShader.setMat4("model",model);
     spriteShader.setInt("spriteTex",0);
 
     while (!glfwWindowShouldClose(window)) {
-        glClear(GL_COLOR_BUFFER_BIT);
+
+        processInput(window);
+
+        GCE glClear(GL_COLOR_BUFFER_BIT); GCE
 
         drawObject(bgShader,bgTex,GL_TEXTURE0,&vao[bg],&ebo[bg]);
 
+        spriteShader.use();
+        glm::mat4 model = glm::mat4(1.0);
+        model = glm::translate(model,glm::vec3(displace,-0.9f,0.0f));
+        spriteShader.setMat4("model",model);
         drawObject(spriteShader,spriteTex,GL_TEXTURE0,&vao[sprite],&ebo[sprite]);
 
         glfwSwapBuffers(window);
@@ -83,4 +94,21 @@ int main() {
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
+}
+
+void processInput(GLFWwindow* window) {
+
+    if(glfwGetKey(window,GLFW_KEY_ESCAPE)  == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window,true);
+    }
+    
+    if(glfwGetKey(window,GLFW_KEY_LEFT) == GLFW_PRESS) {
+        displace -= 0.015f;
+        if(displace < -0.9f) displace = -0.9f;
+    }
+
+    if(glfwGetKey(window,GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        displace += 0.015f;
+        if(displace > 0.9f) displace = 0.9f;
+    }
 }

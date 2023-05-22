@@ -21,7 +21,7 @@ public:
         stbi_set_flip_vertically_on_load(true);
         unsigned char *data = stbi_load(texPath.c_str(), &width,&height,&nrChannels,0);
         if (data) {
-            glTexImage2D(Target, 0, GL_RGB, width, height, 0, rgb, GL_UNSIGNED_BYTE, data); GCE
+            glTexImage2D(Target, 0, rgb, width, height, 0, rgb, GL_UNSIGNED_BYTE, data); GCE
             glGenerateMipmap(Target); GCE
         }else {
             std::cout << "Failed to load texture" << std::endl;

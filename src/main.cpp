@@ -94,7 +94,11 @@ int main() {
     yvalue[eggCount-1] = 1.5f;
     yvalue[eggCount-2] = 1.2f;
     yvalue[eggCount-3] = 2.0f;
+
     int count = 0;
+
+    // init time
+    glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
 
         processInput(window);
@@ -103,36 +107,40 @@ int main() {
 
         drawObject(bgShader,bgTex,GL_TEXTURE0,&vao[bg],&ebo[bg]);
 
-        // generating 4 random variable
-        // float prev = 0.3f;
-        for(int i=0;i<eggCount;i++) {
+        if(glfwGetTime() <= 20) {
+            for(int i=0;i<eggCount;i++) {
 
-            mottaShader.use();
-            glm::mat4 modelMotta = glm::mat4(1.0);
+                mottaShader.use();
+                glm::mat4 modelMotta = glm::mat4(1.0);
 
-            if(yvalue[i] < -1.0f) {
-                yvalue[i] = 1.0f;
-                xvalue[i] =  glRandomNormalized(4);
-                speed[i]  =  glRandomRange(500,1500)*(0.00001);
+                if(yvalue[i] < -1.0f) {
+                    yvalue[i] = 1.0f;
+                    xvalue[i] =  glRandomNormalized(4);
+                    speed[i]  =  glRandomRange(500,1500)*(0.00001);
+                }
+
+                // if collided increment counter
+                if(yvalue[i] < basket_y+0.1 && yvalue[i] > basket_y-0.1 && xvalue[i] < basket_x+0.1 && xvalue[i] > basket_x-0.1) {
+                    count += 1;
+                    yvalue[i] = 1.0f;
+                    xvalue[i] =  glRandomNormalized(4);
+                    speed[i]  =  glRandomRange(500,1500)*(0.00001);
+                }
+
+                modelMotta = glm::translate(modelMotta,glm::vec3(xvalue[i],yvalue[i],0.0f));
+                mottaShader.setMat4("model",modelMotta);
+                drawObject(mottaShader,mottaTex,GL_TEXTURE0,&vao[motta],&ebo[motta]);
+                yvalue[i] -= speed[i];
             }
-            if(yvalue[i] < basket_y+0.1 && yvalue[i] > basket_y-0.1 && xvalue[i] < basket_x+0.1 && xvalue[i] > basket_x-0.1) {
-                count += 1;
-                std::cout << "collided " << count << '\n';
-                yvalue[i] = 1.0f;
-                xvalue[i] =  glRandomNormalized(4);
-                speed[i]  =  glRandomRange(500,1500)*(0.00001);
-            }
-            modelMotta = glm::translate(modelMotta,glm::vec3(xvalue[i],yvalue[i],0.0f));
-            mottaShader.setMat4("model",modelMotta);
-            drawObject(mottaShader,mottaTex,GL_TEXTURE0,&vao[motta],&ebo[motta]);
-            yvalue[i] -= speed[i];
+        
+            spriteShader.use();
+            glm::mat4 modelSprite = glm::mat4(1.0);
+            modelSprite = glm::translate(modelSprite,glm::vec3(basket_x,basket_y,0.0f));
+            spriteShader.setMat4("model",modelSprite);
+            drawObject(spriteShader,spriteTex,GL_TEXTURE0,&vao[sprite],&ebo[sprite]);
+        } else {
+            std::cout << "Game Over\n" << "Your Score: " << count << '\n';
         }
-    
-        spriteShader.use();
-        glm::mat4 modelSprite = glm::mat4(1.0);
-        modelSprite = glm::translate(modelSprite,glm::vec3(basket_x,basket_y,0.0f));
-        spriteShader.setMat4("model",modelSprite);
-        drawObject(spriteShader,spriteTex,GL_TEXTURE0,&vao[sprite],&ebo[sprite]);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -140,6 +148,7 @@ int main() {
 
     bgShader.deleteShader();
     spriteShader.deleteShader();
+    mottaShader.deleteShader();
 
     deleteObject(&vao[bg],&vbo[bg],&ebo[bg]);
     deleteObject(&vao[sprite],&vbo[sprite],&ebo[sprite]);

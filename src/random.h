@@ -1,19 +1,25 @@
 
+#include <time.h>
 #include <cstdlib>
 #include <iostream>
 #include <math.h>
-#include <time.h>
 
-void glRandom(int precision,int count, float* values) {
-	srand(time(0));
+// generate random b/w -1 to 1 with precision
+float glRandomNormalized(int precision) {
     int offset = pow(10,precision);
-    for(int i=0;i<count;i++) {
-        float genN = rand() % (2*offset);
-        if(genN > 100) {
-            genN -= 100;
-            genN *= -1;
-        }
-        values[i] = genN/offset;
+    float genN = rand() % (2*offset);
+    if(genN > offset) {
+        genN -= offset;
+        genN *= -1;
     }
+    return (genN/offset);
 }
 
+// generate number b/w range
+int glRandomRange(int lower,int upper) {
+    int genN = rand() % upper;
+    if(genN < lower) {
+        genN += lower;
+    }
+    return genN;
+}

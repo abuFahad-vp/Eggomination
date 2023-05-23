@@ -3,12 +3,14 @@
 #include "vertexConf.h"
 #include "objects.h"
 #include "random.h"
+#include <time.h>
+#include <cstdlib>
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
-float displace = 0.0f;
+float basket_x = 0.0f;
 
 // settings
 const unsigned int SCR_WIDTH =  960;
@@ -39,7 +41,10 @@ int main() {
         std::cout << "error" << std::endl;
         return -1;
     }
-    
+    // opengl configurations for making transparent objects    
+    GCE glEnable(GL_BLEND); GCE
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); GCE
+
     unsigned int bg = 0;
     unsigned int sprite = 1;
     unsigned int motta = 2;
@@ -58,12 +63,9 @@ int main() {
     Texture spriteTex(GL_TEXTURE_2D,TEX_DIR "basket.png",true);
     spriteTex.parameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     spriteTex.parameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glEnable(GL_BLEND); //Enable blending.
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //Set blending function.
-
     spriteShader.use();
     spriteShader.setInt("spriteTex",0);
+    float basket_y = -0.91f;
 
     // Motta
     Object(motta_vertices,motta_indices,&vao[motta],&vbo[motta],&ebo[motta]);
@@ -71,19 +73,28 @@ int main() {
     Texture mottaTex(GL_TEXTURE_2D, TEX_DIR "motta.png",true);
     mottaTex.parameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     mottaTex.parameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    GCE glEnable(GL_BLEND); GCE
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); GCE
-
     mottaShader.use();
     mottaShader.setInt("mottaTex",0);
 
-    float xvalues[10];
-    float yvalues[10];
+    srand(time(0));
 
-    glRandom(2,5,xvalues);
-    glRandom(2,5,yvalues);
+    int eggCount = 6;
+    float yvalue[eggCount];
+    float xvalue[eggCount];
+    float speed[eggCount];
 
+    for(int i=0;i<eggCount;i++) {
+
+        yvalue[i] = 1.0f;
+        xvalue[i] = glRandomNormalized(4);
+        speed[i] =  glRandomRange(500,1500)*(0.00001);
+    }
+
+    // otherwise all of them droping together
+    yvalue[eggCount-1] = 1.5f;
+    yvalue[eggCount-2] = 1.2f;
+    yvalue[eggCount-3] = 2.0f;
+    int count = 0;
     while (!glfwWindowShouldClose(window)) {
 
         processInput(window);
@@ -93,24 +104,35 @@ int main() {
         drawObject(bgShader,bgTex,GL_TEXTURE0,&vao[bg],&ebo[bg]);
 
         // generating 4 random variable
-        int i = 0;
-        float prev = 0.3f;
-        for(i=0;i<10;i++) {
+        // float prev = 0.3f;
+        for(int i=0;i<eggCount;i++) {
+
             mottaShader.use();
             glm::mat4 modelMotta = glm::mat4(1.0);
-            modelMotta = glm::translate(modelMotta,glm::vec3(xvalues[i]+prev,abs(yvalues[i])*1.5,0.0f));
-            prev = xvalues[i];
-            float drop = -glfwGetTime()*0.5;
-            modelMotta = glm::translate(modelMotta,glm::vec3(0.0f,drop,0.0f));
+
+            if(yvalue[i] < -1.0f) {
+                yvalue[i] = 1.0f;
+                xvalue[i] =  glRandomNormalized(4);
+                speed[i]  =  glRandomRange(500,1500)*(0.00001);
+            }
+            if(yvalue[i] < basket_y+0.1 && yvalue[i] > basket_y-0.1 && xvalue[i] < basket_x+0.1 && xvalue[i] > basket_x-0.1) {
+                count += 1;
+                std::cout << "collided " << count << '\n';
+                yvalue[i] = 1.0f;
+                xvalue[i] =  glRandomNormalized(4);
+                speed[i]  =  glRandomRange(500,1500)*(0.00001);
+            }
+            modelMotta = glm::translate(modelMotta,glm::vec3(xvalue[i],yvalue[i],0.0f));
             mottaShader.setMat4("model",modelMotta);
             drawObject(mottaShader,mottaTex,GL_TEXTURE0,&vao[motta],&ebo[motta]);
+            yvalue[i] -= speed[i];
         }
+    
         spriteShader.use();
         glm::mat4 modelSprite = glm::mat4(1.0);
-        modelSprite = glm::translate(modelSprite,glm::vec3(displace,-0.91f,0.0f));
+        modelSprite = glm::translate(modelSprite,glm::vec3(basket_x,basket_y,0.0f));
         spriteShader.setMat4("model",modelSprite);
         drawObject(spriteShader,spriteTex,GL_TEXTURE0,&vao[sprite],&ebo[sprite]);
-
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -139,12 +161,12 @@ void processInput(GLFWwindow* window) {
     }
     
     if(glfwGetKey(window,GLFW_KEY_LEFT) == GLFW_PRESS) {
-        displace -= 0.015f;
-        if(displace < -0.95f) displace = -0.95f;
+        basket_x -= 0.015f;
+        if(basket_x < -0.95f) basket_x = -0.95f;
     }
 
     if(glfwGetKey(window,GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        displace += 0.015f;
-        if(displace > 0.95f) displace = 0.95f;
+        basket_x += 0.015f;
+        if(basket_x > 0.95f) basket_x = 0.95f;
     }
 }

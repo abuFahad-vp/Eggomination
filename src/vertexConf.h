@@ -40,8 +40,8 @@ void drawObject(Shader bgShader,Texture bgTex,unsigned int c, unsigned int* vao,
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); GCE
 }
 
-void deleteObject(unsigned int* vao,unsigned int* vbo, unsigned int* ebo) {
-    glDeleteVertexArrays(1,vao); GCE
-    glDeleteBuffers(1,vbo); GCE
-    glDeleteBuffers(1,ebo); GCE
+void deleteObject(unsigned int* vao,unsigned int* vbo, unsigned int* ebo,int count) {
+    glDeleteVertexArrays(count,vao); GCE
+    glDeleteBuffers(count,vbo); GCE
+    glDeleteBuffers(count,ebo); GCE
 }

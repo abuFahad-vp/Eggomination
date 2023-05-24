@@ -1,3 +1,3 @@
 # Eggomination
 
-## A 2D opengl Egg Catching Game 
+## An Egg Catching Game made with Opengl
